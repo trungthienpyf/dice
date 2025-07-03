@@ -1,0 +1,67 @@
+version: "3.9"
+services:
+    laravel:
+        container_name: laravel
+        image: trungthienpyf/dice
+        restart: always
+        environment:
+            PHP_OPCACHE_ENABLE: 1
+            PRODUCTION: 1
+            PORT: 12169
+            DB_HOST: ${DB_HOST}
+            DB_PORT: ${DB_PORT}
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
+            LOG_CHANNEL: stderr
+        ports:
+            - 80:80
+        networks:
+            - my-network
+
+    laravel-echo-server:
+        restart: always
+        image: oanhnn/laravel-echo-server:latest
+        container_name: laravel-echo-server
+        ports:
+            - "6001:6001"
+        environment:
+            LARAVEL_ECHO_SERVER_DEBUG: 'true'
+            LARAVEL_ECHO_SERVER_DB: redis
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+            REDIS_PASSWORD: "123123"
+            REDIS_PREFIX: ""
+        networks:
+            - my-network
+
+    redis:
+        restart: always
+        image: redis:latest
+        ports:
+            - "6379:6379"
+        command: [ "redis-server", "--requirepass", "123123" ]
+        networks:
+            - my-network
+    mysql:
+        image: mysql:8.0
+        container_name: mysql
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql_data:/var/lib/mysql
+        networks:
+            - my-network
+
+volumes:
+    mysql_data:
+
+networks:
+    my-network:
+        driver: bridge
