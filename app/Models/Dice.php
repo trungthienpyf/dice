@@ -9,5 +9,13 @@ class Dice extends Model
 {
     use HasFactory;
     protected $guarded = [];
+    public function users()
+    {
+        return $this->belongsToMany(User::class);
+    }
 
+    public function diceTables()
+    {
+        return $this->hasMany(DiceTable::class, 'dice_id');
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\DiceUpdated;
 use App\Jobs\HandleDiceNotificationJob;
 use App\Models\Dice;
+use App\Models\User;
 use App\Models\DiceConfig;
 use App\Models\DiceTable;
 use App\Models\DiceRow;
@@ -16,13 +17,23 @@ class DiceController extends Controller
 {
     public function index()
     {
-        $sessions = Dice::orderBy('created_at', 'desc')
+        $user = auth()->user();
+
+        $sessions = $user->dices() // truy vấn qua quan hệ belongsToMany
+            ->orderBy('created_at', 'desc')
             ->paginate(10);
-        return view('dice.index', compact('sessions'));
+
+        $canViewConfig = $user->can('Xem cấu hình');
+        $canCreateDice = $user->can('Tạo bảng chơi');
+
+        return view('dice.index', compact('sessions', 'canViewConfig', 'canCreateDice'));
     }
 
     public function create()
     {
+        if (!auth()->user()->can('Tạo bảng chơi')) {
+            return redirect()->route('dice.index');
+        }
         $session = Dice::orderBy('created_at', 'desc')->first();
         $configs = DiceConfig::all();
         return view('dice.create', compact('session', 'configs'));
@@ -30,6 +41,9 @@ class DiceController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->can('Tạo bảng chơi')) {
+            return redirect()->route('dice.index');
+        }
         $config = DiceConfig::where('id', $request->config_id)->firstOrFail();
         $diceParent = Dice::create([
             'name' => $request->name,
@@ -56,8 +70,41 @@ class DiceController extends Controller
                 'is_lock' => !($i == 0),
                 'is_show_bo' => $i == 0 && $diceParent->same_row,
             ]);
-
         }
+
+        $user = auth()->user();
+        $relatedUserIds = collect([$user->id]);
+
+        if ($user->hasRole('staff') && $user->staff_for) {
+            $relatedUserIds->push($user->staff_for);
+        }
+
+        foreach (['super_id', 'master_id'] as $field) {
+            if (!is_null($user->$field)) {
+                $relatedUserIds->push($user->$field);
+            }
+        }
+
+        if ($user->hasRole('super') || $user->hasRole('master') || $user->hasRole('admin')) {
+            $staffs = User::where('staff_for', $user->id)->pluck('id');
+            $relatedUserIds = $relatedUserIds->merge($staffs);
+        }
+
+        if ($user->hasRole('staff') && $user->staff_for) {
+            $parent = User::find($user->staff_for);
+            if ($parent) {
+                $staffs = User::where('staff_for', $parent->id)->pluck('id');
+                $relatedUserIds = $relatedUserIds->merge($staffs);
+            }
+        }
+
+        $relatedUserIds = $relatedUserIds->unique();
+
+        $diceParent->users()->attach($relatedUserIds);
+        $dice->users()->attach($relatedUserIds);
+
+
+
 
         return redirect()->route('dice.show', $diceParent->id)
             ->with('success', 'Dice session created successfully.');
@@ -67,7 +114,10 @@ class DiceController extends Controller
     {
         $res = [];
 
-        $sessions = DiceTable::where('parent_id', $id)
+        // $sessions = DiceTable::where('parent_id', $id)
+        //     ->orderBy('id')->get();
+
+        $sessions = auth()->user()->diceTables()->where('parent_id', $id)
             ->orderBy('id')->get();
 
         foreach ($sessions as $dice) {
@@ -87,7 +137,6 @@ class DiceController extends Controller
 
             $res = $this->getRes($dice, $rows, $dice, $res);
         }
-
 
         return $res;
     }
@@ -114,19 +163,30 @@ class DiceController extends Controller
 
     public function show($id)
     {
-        $session = Dice::where('id', $id)->firstOrFail();
+        $user = auth()->user();
+
+        if (!$user->dices->contains($id)) {
+            return redirect('/dice')->with('error', 'Bạn không có quyền xem session này.');
+        }
+
+        $session = Dice::findOrFail($id);
+
         return view('dice.show', compact('session'));
     }
 
     public function edit(Dice $dice)
     {
-
+        if (!auth()->user()->can('Cập nhật bảng chơi')) {
+            return redirect()->route('dice.index');
+        }
         return view('dice.edit', compact('dice'));
     }
 
     public function updateDice(Request $request, Dice $dice)
     {
-
+        if (!auth()->user()->can('Cập nhật bảng chơi')) {
+            return redirect()->route('dice.index');
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:dices,name,' . $dice->id,
             'chat_id' => 'max:255',
@@ -331,11 +391,10 @@ class DiceController extends Controller
 
         if ($sr != null) {
             $same_row_value = $oldDice->diceParent->same_row;
-            $s1 = $sr == 1 ? $same_row_value : -($same_row_value / 3);
-            $s2 = $sr == 2 ? $same_row_value : -($same_row_value / 3);
-            $s3 = $sr == 3 ? $same_row_value : -($same_row_value / 3);
-            $s4 = $sr == 4 ? $same_row_value : -($same_row_value / 3);
-
+            $s1 = $sr == 1 ? $same_row_value : - ($same_row_value / 3);
+            $s2 = $sr == 2 ? $same_row_value : - ($same_row_value / 3);
+            $s3 = $sr == 3 ? $same_row_value : - ($same_row_value / 3);
+            $s4 = $sr == 4 ? $same_row_value : - ($same_row_value / 3);
         }
 
         $c1 += $s1;
@@ -415,17 +474,28 @@ class DiceController extends Controller
         $res = $this->getArrResEvent($diceRow->dice->id, $dataUpdate, $is_unlock_next_row);
 
 
-        event(new DiceUpdated([$request->c1 ?? null ?? $diceRow->c1,
-            $request->c2 ?? null ?? $diceRow->c2,
-            $request->c3 ?? null ?? $diceRow->c3,
-            $request->c4 ?? null ?? $diceRow->c4],
-            $dice_id, $dice_table_id, $res, null, $row_id, 'update', $sr != null,
+        event(new DiceUpdated(
+            [
+                $request->c1 ?? null ?? $diceRow->c1,
+                $request->c2 ?? null ?? $diceRow->c2,
+                $request->c3 ?? null ?? $diceRow->c3,
+                $request->c4 ?? null ?? $diceRow->c4
+            ],
+            $dice_id,
+            $dice_table_id,
+            $res,
+            null,
+            $row_id,
+            'update',
+            $sr != null,
             [
                 $s1 ?? $diceRow->s1,
                 $s2 ?? $diceRow->s2,
                 $s3 ?? $diceRow->s3,
                 $s4 ?? $diceRow->s4,
-            ], $sr));
+            ],
+            $sr
+        ));
 
 
         $diceRow->update([
@@ -462,8 +532,10 @@ class DiceController extends Controller
                 ->first();
 
             if ($diceRowUpdate) {
-                $diceRowUpdate->update(['is_lock' => !($request->is_lock == true),
-                    'is_show_bo' => $request->is_lock == true]);
+                $diceRowUpdate->update([
+                    'is_lock' => !($request->is_lock == true),
+                    'is_show_bo' => $request->is_lock == true
+                ]);
             }
 
 
@@ -497,9 +569,7 @@ class DiceController extends Controller
                     'tt3' => $tt3,
                     'tt4' => $tt4,
                 ]);
-
             }
-
         } else {
             if ($diceUpdateList->count() != 0) {
 
@@ -533,10 +603,8 @@ class DiceController extends Controller
                         'tt3' => $tt3,
                         'tt4' => $tt4,
                     ]);
-
                 }
             }
-
         }
         $countLock = $oldDice->diceRows()
             ->where(function ($query) {
@@ -648,6 +716,9 @@ class DiceController extends Controller
     public
     function destroy($id)
     {
+        if (!auth()->user()->can('Xóa bảng chơi')) {
+            return redirect()->route('dice.index');
+        }
         $diceIds = Dice::where('id', $id)->pluck('id');
 
         $diceSubIds = DiceTable::whereIn('parent_id', $diceIds)->pluck('id');
@@ -697,40 +768,56 @@ class DiceController extends Controller
     public
     function getRes($dice, array $rows, $oldDice, array $res): array
     {
+        $user = auth()->user();
 
-        $res[] = $this->res($dice, $rows,
-            [
-                $dice->td1 ?? 0,
-                $dice->td2 ?? 0,
-                $dice->td3 ?? 0,
-                $dice->td4 ?? 0,
-            ],
-            [
-                $oldDice->cc1 ?? 0,
-                $oldDice->cc2 ?? 0,
-                $oldDice->cc3 ?? 0,
-                $oldDice->cc4 ?? 0,
-            ],
-            [
-                $oldDice->tc1 ?? 0,
-                $oldDice->tc2 ?? 0,
-                $oldDice->tc3 ?? 0,
-                $oldDice->tc4 ?? 0,
-            ],
-            [
-                $oldDice->tt1 ?? 0,
-                $oldDice->tt2 ?? 0,
-                $oldDice->tt3 ?? 0,
-                $oldDice->tt4 ?? 0,
-            ]);
+        $td = $user->can('readTD') ? [
+            $dice->td1 ?? 0,
+            $dice->td2 ?? 0,
+            $dice->td3 ?? 0,
+            $dice->td4 ?? 0,
+        ] : null;
+
+        $cc = $user->can('Xem tiền xâu') ? [
+            $oldDice->cc1 ?? 0,
+            $oldDice->cc2 ?? 0,
+            $oldDice->cc3 ?? 0,
+            $oldDice->cc4 ?? 0,
+        ] : null;
+
+        $tc = $user->can('Xem tiền xâu') ? [
+            $oldDice->tc1 ?? 0,
+            $oldDice->tc2 ?? 0,
+            $oldDice->tc3 ?? 0,
+            $oldDice->tc4 ?? 0,
+        ] : null;
+
+        $tt = $user->can('Xem tổng tiền') ? [
+            $oldDice->tt1 ?? 0,
+            $oldDice->tt2 ?? 0,
+            $oldDice->tt3 ?? 0,
+            $oldDice->tt4 ?? 0,
+        ] : null;
+
+        $res[] = $this->res(
+            $dice,
+            $rows,
+            $td,
+            $cc,
+            $tc,
+            $tt
+        );
+
         return $res;
     }
+
 
     public
     function getResEvent($dice, array $rows, $oldDice): array
     {
 
-        return $this->res($dice, $rows,
+        return $this->res(
+            $dice,
+            $rows,
             [
                 $dice->td1 ?? 0,
                 $dice->td2 ?? 0,
@@ -754,7 +841,8 @@ class DiceController extends Controller
                 $oldDice->tt2 ?? 0,
                 $oldDice->tt3 ?? 0,
                 $oldDice->tt4 ?? 0,
-            ]);
+            ]
+        );
     }
 
     public

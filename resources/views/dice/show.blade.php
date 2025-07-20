@@ -853,8 +853,11 @@
     `;
         });
 
-        table.innerHTML += `
-          <tr class="summary-row">
+        
+
+        if(session.td != null){
+            table.innerHTML += `
+                <tr class="summary-row">
             <td class="summary-cell total">${session.ftd}</td>
             ${session.td.map(v => `
                 <td class="summary-cell ${v < 0 ? 'negative' : 'positive'}">${v}</td>
@@ -863,18 +866,32 @@
                 ${session.td.reduce((a, b) => a + b, 0)}
             </td>
         </tr>
-   <tr class="tc-row" data-id="${session.id}" style="font-size: 20px;">
+            `
+        }
+
+        if(session.tc != null){
+            table.innerHTML += `
+                <tr class="tc-row" data-id="${session.id}" style="font-size: 20px;">
         <td>TC</td>
         ${session.tc.map(v => `<td class="${v < 0 ? 'negative' : 'positive'}">${v}</td>`).join('')}
         <td class="positive">0</td>
     </tr>
-    <tr class="highlight-row" data-id="${session.id}" style="font-size: 20px;">
+            `
+        }
+
+        if(session.cc != null){
+            table.innerHTML += `
+                <tr class="highlight-row" data-id="${session.id}" style="font-size: 20px;">
         <td>${session.cc.reduce((a, b) => a + b, 0)}</td>
         ${session.cc.map(v => `<td class="${v < 0 ? 'negative' : 'positive'}">${v}</td>`).join('')}
         <td class="positive">  ${session.tt.reduce((a, b) => a + b, 0) + session.cc.reduce((a, b) => a + b, 0)}</td>
     </tr>
+            `
+        }
 
-    <tr class="tt-row" data-id="${session.id}" style="font-size: 20px;">
+        if(session.tt != null){
+            table.innerHTML += `
+                <tr class="tt-row" data-id="${session.id}" style="font-size: 20px;">
         <td>TT</td>
         ${session.tt.map(v => `<td class="${v < 0 ? 'negative' : 'positive'}">${v.toLocaleString()}</td>`).join('')}
         <td class="align-middle">
@@ -887,7 +904,11 @@
             ` : stt}
         </td>
     </tr>
-`;
+            `
+        }
+
+
+        
 
         const wrapper = document.createElement('div');
         wrapper.className = 'session-table';
