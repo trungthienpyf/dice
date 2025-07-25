@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\DiceConfig;
 use App\Models\DiceTable;
 use App\Models\DiceRow;
+use Illuminate\Support\Facades\Log;
 
 use Illuminate\Http\Request;
 
@@ -739,7 +740,7 @@ class DiceController extends Controller
      * @return array
      */
     public
-    function res(mixed $dice, array $rows, $td, $cc, $tc, $tt): array
+    function res(mixed $dice, array $rows, $td, $cc, $tc, $tt, $ctd, $ccc, $ctc, $ctt): array
     {
         return [
             'id' => $dice->id,
@@ -755,6 +756,11 @@ class DiceController extends Controller
             'cc' => $cc,
             'tc' => $tc,
             'tt' => $tt,
+            'ctd' => $ctd,
+            'ccc' => $ccc,
+            'ctc' => $ctc,
+            'ctt' => $ctt,
+
         ];
     }
 
@@ -770,33 +776,38 @@ class DiceController extends Controller
     {
         $user = auth()->user();
 
-        $td = $user->can('readTD') ? [
+        $td =  [
             $dice->td1 ?? 0,
             $dice->td2 ?? 0,
             $dice->td3 ?? 0,
             $dice->td4 ?? 0,
-        ] : null;
-
-        $cc = $user->can('Xem tiền xâu') ? [
+        ] ;
+        $ctd = $user->can('Xem tổng chi của bảng hiện tại');
+        
+        $cc = [
             $oldDice->cc1 ?? 0,
             $oldDice->cc2 ?? 0,
             $oldDice->cc3 ?? 0,
             $oldDice->cc4 ?? 0,
-        ] : null;
+        ] ;
 
-        $tc = $user->can('Xem tiền xâu') ? [
+        $ccc = $user->can('Xem tiền xâu');
+
+        $tc =  [
             $oldDice->tc1 ?? 0,
             $oldDice->tc2 ?? 0,
             $oldDice->tc3 ?? 0,
             $oldDice->tc4 ?? 0,
-        ] : null;
+        ] ;
+        $ctc = $user->can('Tổng chi của nhiều bảng') ;
 
-        $tt = $user->can('Xem tổng tiền') ? [
+        $tt = [
             $oldDice->tt1 ?? 0,
             $oldDice->tt2 ?? 0,
             $oldDice->tt3 ?? 0,
             $oldDice->tt4 ?? 0,
-        ] : null;
+        ] ;
+        $ctt = $user->can('Xem tổng tiền');
 
         $res[] = $this->res(
             $dice,
@@ -804,9 +815,13 @@ class DiceController extends Controller
             $td,
             $cc,
             $tc,
-            $tt
+            $tt,
+            $ctd,
+            $ccc,
+            $ctc,
+            $ctt,
         );
-
+        Log::info($res);
         return $res;
     }
 

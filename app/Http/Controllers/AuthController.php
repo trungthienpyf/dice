@@ -12,9 +12,10 @@ use Illuminate\Support\Carbon;
 
 class AuthController extends Controller
 {
-    // Đăng nhập API
+    
     public function login(Request $request)
     {
+        Auth::logout();
         $credentials = $request->validate([
             'username' => ['required'],
             'password' => ['required'],
@@ -23,17 +24,23 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
 
-            // Kiểm tra ngày hết hạn
-            if ($user->expired_at && Carbon::parse($user->expired_at)->isPast()) {
-                Auth::logout();
+            $latestRent = $user->latestRent(); 
 
+            if($latestRent == null){
+                Auth::logout();
                 return back()->withErrors([
-                    'username' => 'Tài khoản đã hết hạn.',
+                    'username' => 'Tài khoản chưa được kích hoạt. Vui lòng liên hệ quản trị viên.',
+                ])->withInput();
+            }
+
+            if ($latestRent && now()->gt($latestRent->end_date)) {
+                Auth::logout();
+                return back()->withErrors([
+                    'username' => 'Tài khoản đã hết hạn thuê. Vui lòng liên hệ quản trị viên.',
                 ])->withInput();
             }
 
             $request->session()->regenerate();
-
             return redirect()->intended('/dice');
         }
 

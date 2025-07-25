@@ -2,11 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\Rent;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Carbon\Carbon;
 
 class RoleSeeder extends Seeder
 {
@@ -15,92 +17,118 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        // $super = Role::create(['name' => 'super']);
-        // $master = Role::create(['name' => 'master']);
-        // $admin = Role::create(['name' => 'admin']);
-        // $user = Role::create(['name' => 'user']);
-        // $staff = Role::create(['name' => 'staff']);
-        // $viewer = Role::create(['name' => 'viewer']);
-
-        // $createReport = Permission::create(['name' => 'createReport']);
-
-        $roles = ['super', 'master', 'admin', 'user', 'viewer'];
-        $role = Role::firstOrCreate(['name' => 'super']);
-
-
-
-        $permissionName =  'Tạo cấu hình';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-
-
-        $permissionName =  'Xem cấu hình';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-
-        $permissionName =  'Sửa cấu hình';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-        $permissionName =  'Xóa cấu hình';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-
-        $permissionName =  'Tạo bảng chơi';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-        $permissionName =  'Cập nhật bảng chơi';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-        $permissionName =  'Xóa bảng chơi';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
         
 
-        $permissionName =  'Tạo bảng ghi';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-        $permissionName =  'Cập nhật bảng ghi';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-        $permissionName =  'Xóa bảng ghi';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
+        $roles = ['super', 'super_template', 'master_template', 'admin_template'];
 
-        $permissionName =  'Xem tiền xâu';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
+        $permissions = [
+            'Tạo cấu hình',
+            'Xem cấu hình',
+            'Sửa cấu hình',
+            'Xóa cấu hình',
+            'Tạo bảng chơi',
+            'Cập nhật bảng chơi',
+            'Xóa bảng chơi',
+            'Tạo bảng ghi',
+            'Cập nhật bảng ghi',
+            'Xóa bảng ghi',
+            'Xem tiền xâu',
+            'Tổng chi của nhiều bảng',
+            'Xem tổng chi của bảng hiện tại',
+            'Xem tổng tiền',
+            'Tạo user',
+            'Cập nhật user',
+            'Xóa user',
+            'Xem danh sách user',
+            'Gia hạn',
+        ];
 
-        $permissionName =  'Xem tổng cộng';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
+        foreach ($permissions as $permissionName) {
+            Permission::firstOrCreate(['name' => $permissionName]);
+        }
 
-        $permissionName =  'readTD';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
+        foreach ($roles as $roleName) {
+            $role = Role::firstOrCreate(['name' => $roleName]);
+            $role->syncPermissions($permissions); // gán toàn bộ permission một lần
+        }
 
-        $permissionName =  'Xem tổng tiền';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-        $permissionName =  'Tạo user';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-        $permissionName =  'Cập nhật user';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-        $permissionName =  'Xóa user';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-        $permissionName =  'Xem danh sách user';
-        $permission = Permission::firstOrCreate(['name' => $permissionName]);
-        $role->givePermissionTo($permission);
-       
+        $roles = ['master','admin','staff','user','viewer'];
 
-        // $role = Role::findByName('super');
+        foreach ($roles as $roleName) {
+            $role = Role::firstOrCreate(['name' => $roleName]);
+        }
 
-        // // Tìm user có id = 3
-        // $user = User::findOrFail(31);
 
-        // // Gán role
-        // $user->assignRole($role);
+        $roles = ['user_template'];
+
+        $permissions = [
+            'Tạo cấu hình',
+            'Xem cấu hình',
+            'Sửa cấu hình',
+            'Xóa cấu hình',
+            'Tạo bảng chơi',
+            'Cập nhật bảng chơi',
+            'Xóa bảng chơi',
+            'Tạo bảng ghi',
+            'Cập nhật bảng ghi',
+            'Xóa bảng ghi',
+            'Xem tiền xâu',
+            'Tổng chi của nhiều bảng',
+            'Xem tổng chi của bảng hiện tại',
+            'Xem tổng tiền',
+            'Tạo user',
+            'Cập nhật user',
+            'Xóa user',
+            'Xem danh sách user',
+        ];
+
+        foreach ($permissions as $permissionName) {
+            Permission::firstOrCreate(['name' => $permissionName]);
+        }
+
+        foreach ($roles as $roleName) {
+            $role = Role::firstOrCreate(['name' => $roleName]);
+            $role->syncPermissions($permissions); // gán toàn bộ permission một lần
+        }
+        
+        $roles = ['viewer_template'];
+
+        $permissions = [
+            
+            'Xem tiền xâu',
+            'Tổng chi của nhiều bảng',
+            'Xem tổng chi của bảng hiện tại',
+            'Xem tổng tiền',
+            
+        ];
+
+        foreach ($permissions as $permissionName) {
+            Permission::firstOrCreate(['name' => $permissionName]);
+        }
+
+        foreach ($roles as $roleName) {
+            $role = Role::firstOrCreate(['name' => $roleName]);
+            $role->syncPermissions($permissions); // gán toàn bộ permission một lần
+        }
+        
+        $super = User::factory()->create([
+            'name' => 'super',
+            'email' => 'super@example.com',
+            'username' => 'super',
+            'password' => '123123',
+        ]);
+
+        $role = Role::findByName('super');
+
+        $super->assignRole($role);
+
+        Rent::create([
+            'start_date' => Carbon::now(),
+            'end_date' => Carbon::now()->addYears(100),
+            'amount' => 0,
+            'user_id'=> $super->id,
+        ]);
+
+        
     }
 }

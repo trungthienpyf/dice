@@ -15,7 +15,7 @@ Route::get('/login', function () {
     return view('login');
 })->name('login');
 
-Route::post('/api/login', [AuthController::class, 'login'])->name('users.login');
+Route::post('/login', [AuthController::class, 'login'])->name('users.login');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
@@ -33,6 +33,12 @@ Route::middleware('auth')->group(function () {
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::get('/users/{user}/permission', [UserController::class, 'permissionDetail'])->name('users.permission');
+    Route::get('/users/{user}/extend', [UserController::class, 'extend'])->name('users.extend');
+    Route::post('/users/{user}/extend', [UserController::class, 'extendSubmit'])->name('users.extend.submit');
+    Route::get('/users/{user}/rents/stats', [UserController::class, 'rentStats'])->name('users.rents.stats');
+    
+    
+    
     Route::get('/dice', [DiceController::class, 'index'])->name('dice.index');
     Route::get('/dice/create', [DiceController::class, 'create'])->name('dice.create');
     Route::get('/dice/{id}', [DiceController::class, 'show'])->name('dice.show');

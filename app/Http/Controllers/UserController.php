@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Rent;
 use App\Models\Dice;
 use Illuminate\Auth\Events\Validated;
 use Illuminate\Support\Facades\Hash;
@@ -11,6 +12,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Carbon\Carbon;
+
 
 class UserController extends Controller
 {
@@ -27,9 +31,8 @@ class UserController extends Controller
         }
 
         $currentUser = auth()->user();
-
+        $extend_permission = $currentUser->can('Gia hạn');
         $isStaff = false;
-
         $query = User::query();
 
         if ($currentUser->staff_for) {
@@ -54,10 +57,41 @@ class UserController extends Controller
             });
         }
 
-        $sessions = $query->with('roles')->paginate(10);
+        // ✅ Lọc theo từ khóa tìm kiếm
+        $search = request('search');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('username', 'like', '%' . $search . '%');
+            });
+        }
 
-        return view('users.index', compact('sessions'));
+        $sessions = $query->with('roles')->get();
+
+        $sessions->each(function ($user) {
+            $user->status = $user->status;
+            $user->amount = $user->amount;
+        });
+
+        $page = request('page', 1);
+        $perPage = 10;
+        $paged = new LengthAwarePaginator(
+            $sessions->forPage($page, $perPage),
+            $sessions->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        
+
+        return view('users.index', [
+            'sessions' => $paged,
+            'search' => $search,
+            'extend_permission'=>$extend_permission,
+        ]);
     }
+
 
     public function create()
     {
@@ -68,12 +102,54 @@ class UserController extends Controller
         $currentUser = Auth::user();
         $currentRole = $currentUser->getRoleNames()->first();
 
-        $index = array_search($currentRole, $this->roleHierarchy);
-        $lowerRoles = array_slice($this->roleHierarchy, $index + 1);
+        $isStaff = false;
 
-        $roles = Role::whereIn('name', $lowerRoles)->get(['id', 'name']);
+        if ($currentUser->staff_for) {
+            $currentUser = User::find($currentUser->staff_for);
+            $isStaff = true;
+        }
 
-        $permissions = Permission::all();
+        $lower = [];
+
+        if ($currentUser->hasRole('super')) {
+            $lower = [
+                'master' => Role::findByName('master_template')->permissions->pluck('name')->toArray()
+            ];
+            if (!$isStaff) {
+                $lower['staff'] = Role::findByName('super_template')->permissions->pluck('name')->toArray();
+            }
+        } elseif ($currentUser->hasRole('master')) {
+            $lower = [
+                'admin' => Role::findByName('admin_template')->permissions->pluck('name')->toArray()
+            ];
+            if (!$isStaff) {
+                $lower['staff'] = Role::findByName('master_template')->permissions->pluck('name')->toArray();
+            }
+        } elseif ($currentUser->hasRole('admin')) {
+            $lower = [
+                'user' => Role::findByName('user_template')->permissions->pluck('name')->toArray()
+            ];
+            if (!$isStaff) {
+                $lower['staff'] = Role::findByName('admin_template')->permissions->pluck('name')->toArray();
+            }
+        } elseif ($currentUser->hasRole('user')) {
+            $lower = [
+                'viewer' => Role::findByName('viewer_template')->permissions->pluck('name')->toArray()
+            ];
+            if (!$isStaff) {
+                $lower['staff'] = Role::findByName('user_template')->permissions->pluck('name')->toArray();
+            }
+        }
+
+
+        // $index = array_search($currentRole, $this->roleHierarchy);
+        // $lowerRoles = array_slice($this->roleHierarchy, $index + 1);
+
+
+
+        // $roles = Role::whereIn('name', $lowerRoles)->get(['id', 'name']);
+
+        // $permissions = Permission::all();
 
         $accessibleDiceTables = $currentUser->diceTables()->with('diceParent')->get();
 
@@ -85,8 +161,7 @@ class UserController extends Controller
         // dd($diceTablesGroupedByParent);
 
         return view('users.create', compact(
-            'roles',
-            'permissions',
+            'lower',
             'diceTablesGroupedByParent'
         ));
 
@@ -105,7 +180,7 @@ class UserController extends Controller
             'name'        => 'required',
             'email'       => 'email',
             'username'    => 'required|string|unique:users,username',
-            'password'    => 'required|min:6',
+            'password'    => 'required',
             'role'        => 'required|exists:roles,name',
             'permissions' => 'array',
         ]);
@@ -168,7 +243,6 @@ class UserController extends Controller
             'super_id'  => $managerData['super_id'],
             'master_id' => $managerData['master_id'],
             'admin_id'  => $managerData['admin_id'],
-            'expired_at' => $request['expired_at'],
             'user_id'   => $managerData['user_id'],
             'staff_for' => $managerData['staff_for'],
         ]);
@@ -203,29 +277,75 @@ class UserController extends Controller
         return $user->load('roles');
     }
 
+    // public function edit(User $user)
+    // {
+    //     if (!auth()->user()->can('Cập nhật user')) {
+    //         return redirect()->route('users.index')
+    //             ->with('error', 'Bạn không có quyền cập nhật user.');
+    //     }
+    //     $roles = Role::all();
+    //     $permissions = Permission::all();
+    //     $userPermissions = $user->getPermissionNames();
+
+    //     $currentUser = Auth::user();
+
+    //     $accessibleDiceTables = $currentUser->diceTables()->with('diceParent')->get();
+
+    //     $checkedDiceTableIds = $user->diceTables()->with('diceParent')->get()->pluck('id')->toArray();
+
+    //     $diceTablesGroupedByParent = $accessibleDiceTables->groupBy(function ($table) {
+    //         return $table->diceParent->id ?? null;
+    //     });
+
+
+    //     return view('users.edit', compact('user', 'roles', 'permissions', 'userPermissions', 'diceTablesGroupedByParent', 'checkedDiceTableIds'));
+    // }
+
     public function edit(User $user)
     {
         if (!auth()->user()->can('Cập nhật user')) {
             return redirect()->route('users.index')
                 ->with('error', 'Bạn không có quyền cập nhật user.');
         }
+
         $roles = Role::all();
-        $permissions = Permission::all();
         $userPermissions = $user->getPermissionNames();
+        $userRoles = $user->roles->pluck('name')->toArray();
 
         $currentUser = Auth::user();
+        $currentRole = $currentUser->getRoleNames()->first();
 
+        $isStaff = false;
+
+        if ($currentUser->staff_for) {
+            $currentUser = User::find($currentUser->staff_for);
+            $isStaff = true;
+        }
+        $updateRole = $user->getRoleNames()->first();
+        // dd($updateRole);
+
+        $template = $template = Role::findByName($updateRole.'_template')->permissions->pluck('name')->toArray();
+        
+
+        $currentUser = Auth::user();
         $accessibleDiceTables = $currentUser->diceTables()->with('diceParent')->get();
-
-        $checkedDiceTableIds = $user->diceTables()->with('diceParent')->get()->pluck('id')->toArray();
+        $checkedDiceTableIds = $user->diceTables()->pluck('dice_tables.id')->toArray();
 
         $diceTablesGroupedByParent = $accessibleDiceTables->groupBy(function ($table) {
             return $table->diceParent->id ?? null;
         });
 
-
-        return view('users.edit', compact('user', 'roles', 'permissions', 'userPermissions', 'diceTablesGroupedByParent', 'checkedDiceTableIds'));
+        return view('users.edit', compact(
+            'user',
+            'roles',
+            'template',
+            'userPermissions',
+            'userRoles',
+            'diceTablesGroupedByParent',
+            'checkedDiceTableIds'
+        ));
     }
+
 
     public function update(Request $request, User $user)
     {
@@ -236,7 +356,6 @@ class UserController extends Controller
         $validated = $request->validate([
             'name'        => 'required',
             'password'    => 'nullable|min:6',
-            'role'        => 'required|exists:roles,name',
             'permissions' => 'array',
         ]);
 
@@ -257,13 +376,12 @@ class UserController extends Controller
 
         $user->update([
             'name'  => $validated['name'],
-            'expires_at'=> $request['expires_at'],
             'password' => $validated['password'] ? bcrypt($validated['password']) : $user->password,
         ]);
 
 
 
-        $user->syncRoles([$validated['role']]);
+        // $user->syncRoles([$validated['role']]);
 
         $user->syncPermissions($validated['permissions'] ?? []);
 
@@ -319,5 +437,45 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('users.index')->with('success', 'Xóa người dùng thành công.');
+    }
+    public function extend($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Gửi sang trang form gia hạn (bạn có thể tạo blade riêng)
+        return view('users.extend', compact('user'));
+    }
+
+    public function extendSubmit(Request $request, $id)
+    {
+        $request->validate([
+            'days' => 'required|integer|min:1',
+            'amount' => 'required|numeric',
+        ]);
+
+        $user = User::findOrFail($id);
+        $days = (int) $request->input('days');
+        $amount = (float) $request->input('amount');
+
+        $startDate = $user->nextRentStartDate();
+        // dd($startDate->copy()->addDays($days));
+        $endDate = $startDate->copy()->addDays($days);
+
+
+        Rent::create([
+            'user_id' => $user->id,
+            'amount' => $amount,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+
+        return redirect()->route('users.index')->with('success', 'Gia hạn thành công!');
+    }
+    public function rentStats(User $user)
+    {
+        $rents = $user->rents()->orderByDesc('start_date')->get();
+        $total = $rents->sum('amount');
+
+        return view('users.rent-stats', compact('user', 'rents', 'total'));
     }
 }

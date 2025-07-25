@@ -759,6 +759,7 @@
                 return response.json();
             })
             .then(data => {
+                console.log(data)
                 renderTables(data);
             })
             .catch(error => {
@@ -854,8 +855,7 @@
         });
 
         
-
-        if(session.td != null){
+        if(session.ctd){
             table.innerHTML += `
                 <tr class="summary-row">
             <td class="summary-cell total">${session.ftd}</td>
@@ -869,7 +869,7 @@
             `
         }
 
-        if(session.tc != null){
+        if(session.ctc){
             table.innerHTML += `
                 <tr class="tc-row" data-id="${session.id}" style="font-size: 20px;">
         <td>TC</td>
@@ -879,7 +879,7 @@
             `
         }
 
-        if(session.cc != null){
+        if(session.ccc ){
             table.innerHTML += `
                 <tr class="highlight-row" data-id="${session.id}" style="font-size: 20px;">
         <td>${session.cc.reduce((a, b) => a + b, 0)}</td>
@@ -889,7 +889,7 @@
             `
         }
 
-        if(session.tt != null){
+        if(session.ctt ){
             table.innerHTML += `
                 <tr class="tt-row" data-id="${session.id}" style="font-size: 20px;">
         <td>TT</td>

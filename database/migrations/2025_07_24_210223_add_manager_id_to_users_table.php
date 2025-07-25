@@ -12,7 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->timestamp('expired_at')->nullable()->after('email');
+            $table->unsignedBigInteger('super_id')->nullable()->after('id');
+            $table->unsignedBigInteger('master_id')->nullable()->after('id');
+            $table->unsignedBigInteger('admin_id')->nullable()->after('id');
+            $table->unsignedBigInteger('user_id')->nullable()->after('id');
         });
     }
 
@@ -22,7 +25,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('expired_at');
+            $table->dropColumn('super_id');
+            $table->dropColumn('master_id');
+            $table->dropColumn('admin_id');
+            $table->dropColumn('user_id');
         });
     }
 };
