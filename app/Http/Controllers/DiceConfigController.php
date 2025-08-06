@@ -9,9 +9,15 @@ class DiceConfigController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
+
+        $canDeleteConfig = $user->can('Xóa cấu hình');
+        $canCreateConfig = $user->can('Tạo cấu hình');
+
         $configs = DiceConfig::latest()
             ->paginate(10);
-        return view('dice.configs.index', compact('configs'));
+
+        return view('dice.configs.index', compact('configs','canDeleteConfig','canCreateConfig'));
     }
 
     public function create()
@@ -69,7 +75,8 @@ class DiceConfigController extends Controller
                         $fail('Trường ' . $attribute . ' phải là số khác 0 và chia hết cho 3.');
                     }
                 },
-            ],]);
+            ],
+        ]);
 
         $config->update($validated);
 
@@ -79,12 +86,9 @@ class DiceConfigController extends Controller
 
     public function destroy(DiceConfig $config)
     {
-
         $config->delete();
 
         return redirect()->route('dice.configs.index')
             ->with('success', 'Cấu hình đã được xóa thành công.');
     }
-
-
 }

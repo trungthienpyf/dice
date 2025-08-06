@@ -14,12 +14,14 @@ class DiceTable extends Model
     public function diceParent()
     {
         return $this->belongsTo(Dice::class, 'parent_id');
-
     }
 
     public function diceRows()
     {
         return $this->hasMany(DiceRow::class, 'dice_id');
-
+    }
+    public function users()
+    {
+        return $this->belongsToMany(User::class);
     }
 }
