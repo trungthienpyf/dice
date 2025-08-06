@@ -28,6 +28,7 @@ fi
 composer dump-autoload
 # Clear the old boostrap/cache
 php artisan clear-compiled
+composer require fakerphp/faker --dev
 
 # Install composer dependencies
 if [ "$PRODUCTION" = "1" ]; then
@@ -35,6 +36,7 @@ if [ "$PRODUCTION" = "1" ]; then
 else
     composer install --no-interaction --no-scripts
 fi
+composer update
 
 echo "Generating app key..."
 # Generate an application key
@@ -47,6 +49,7 @@ php artisan optimize:clear
 # Remove prior storage links that exist
 rm -rf public/storage
 php artisan migrate
+
 
 # Build up a new storage link
 php artisan storage:link

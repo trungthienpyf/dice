@@ -15,11 +15,14 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'super',
-            'email' => 'super@example.com',
-            'username' => 'super',
-            'password' => '12345678',
+//        User::factory()->create([
+//            'name' => 'super',
+//            'email' => 'super@example.com',
+//            'username' => 'super',
+//            'password' => '12345678',
+//        ]);
+        $this->call([
+            RoleSeeder::class, // ← PHẢI gọi ở đây
         ]);
     }
 }
