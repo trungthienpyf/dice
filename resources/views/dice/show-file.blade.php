@@ -359,9 +359,18 @@
             background-color: #f4de5a8a;
         }
 
-        td.s-highlight {
-            background-color: #f44336 !important; /* đỏ */
+        .s-highlight {
+            background-color: #e781ff !important;
         }
+
+        td .s-highlight {
+            background-color: #e781ff !important;
+        }
+
+        input .s-highlight {
+            background-color: #e781ff !important;
+        }
+
 
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button {
@@ -373,18 +382,20 @@
         input[type="number"] {
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
-            width: 100%!important;
-            border: none!important;
+            width: 100% !important;
+            border: none !important;
             outline: none !important;
-            padding: 0!important;
-            margin: 0!important;
-            background: transparent!important;
-            text-align: center!important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+            text-align: center !important;
         }
+
         td {
             /*padding: 0!important;*/
             /*margin: 8px!important;*/
         }
+
         /* Better button styling for touch */
         .btn {
             min-height: 44px;
@@ -484,32 +495,22 @@
     </style>
 </head>
 <body>
-<!-- Excel-style Zoom Controls -->
-<div class="zoom-controls">
-    <button class="zoom-btn" id="zoomOut" title="Zoom Out">
-        <i class="fas fa-minus"></i>
-    </button>
-    <input type="range" class="zoom-slider" id="zoomSlider" min="25" max="300" value="100" title="Zoom Level">
-    <button class="zoom-btn" id="zoomIn" title="Zoom In">
-        <i class="fas fa-plus"></i>
-    </button>
-    <div class="zoom-level" id="zoomLevel">100%</div>
-</div>
+
 
 <!-- Main content wrapper for zoom -->
 <div class="zoom-wrapper" id="zoomWrapper">
-{{--    <div class="container">--}}
-{{--        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">--}}
-{{--            <h1 class="mb-0 flex-grow-1">Bảng ghi {{ $session->name }}</h1>--}}
-{{--            <a href="{{ route('dice.index') }}" class="btn btn-secondary mt-2 mt-md-0">--}}
-{{--                <i class="fas fa-arrow-left"></i> Quay lại--}}
-{{--            </a>--}}
-{{--        </div>--}}
-{{--        <form class="date-filter" id="dateForm">--}}
-{{--            --}}{{--            <label for="date">Select date:</label>--}}
-{{--            --}}{{--            <input type="date" id="date" name="date" value="">--}}
-{{--        </form>--}}
-{{--    </div>--}}
+    {{--    <div class="container">--}}
+    {{--        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">--}}
+    {{--            <h1 class="mb-0 flex-grow-1">Bảng ghi {{ $session->name }}</h1>--}}
+    {{--            <a href="{{ route('dice.index') }}" class="btn btn-secondary mt-2 mt-md-0">--}}
+    {{--                <i class="fas fa-arrow-left"></i> Quay lại--}}
+    {{--            </a>--}}
+    {{--        </div>--}}
+    {{--        <form class="date-filter" id="dateForm">--}}
+    {{--            --}}{{--            <label for="date">Select date:</label>--}}
+    {{--            --}}{{--            <input type="date" id="date" name="date" value="">--}}
+    {{--        </form>--}}
+    {{--    </div>--}}
     <div id="tables-root">
         @php $stt = 0; @endphp
         <div id="root">
@@ -527,18 +528,18 @@
 
                 <div class="session-table">
                     <div class="session-title">
-                        Bảng {{ $stt }} ({{ $session['name'] }})
+                        Bảng {{ e($stt) }} ({{ e($session['name']) }})
                     </div>
-                    <table data-id="{{ $session['id'] }}">
+                    <table data-id="{{ e($session['id']) }}">
                         <tr class="header-row">
-                            <th colspan="6">Bảng {{ $stt }} ({{ $session['name'] }})</th>
+                            <th colspan="6">Bảng {{ e($stt) }} ({{ e($session['name']) }})</th>
                         </tr>
                         <tr>
                             <th style="width: 60px; color:red">{{ \Carbon\Carbon::createFromFormat('d/m/Y', $session['date'])->format('d/m/y') }}</th>
-                            <th class="{{ $highlightName == 0 ? 'highlight-td' : '' }}">{{ $session['u1'] }}</th>
-                            <th class="{{ $highlightName == 1 ? 'highlight-td' : '' }}">{{ $session['u2'] }}</th>
-                            <th class="{{ $highlightName == 2 ? 'highlight-td' : '' }}">{{ $session['u3']}}</th>
-                            <th class="{{ $highlightName == 3 ? 'highlight-td' : '' }}">{{ $session['u4'] }}</th>
+                            <th class="{{ $highlightName == 0 ? 'highlight-td' : '' }}">{{ e($session['u1']) }}</th>
+                            <th class="{{ $highlightName == 1 ? 'highlight-td' : '' }}">{{ e($session['u2']) }}</th>
+                            <th class="{{ $highlightName == 2 ? 'highlight-td' : '' }}">{{ e($session['u3']) }}</th>
+                            <th class="{{ $highlightName == 3 ? 'highlight-td' : '' }}">{{ e($session['u4']) }}</th>
                             <th>Total</th>
                         </tr>
 
@@ -557,45 +558,69 @@
                                             $classes .= ' s-highlight';
                                         }
                                     @endphp
-                                    <td class="{{ $classes }}">
-                                        <input type="number" name="{{ $idx }}"
-                                               data-index="{{ $idx }}" data-id="{{ $row['id'] }}"
-                                               value="{{ $val ?? '' }}"
-                                               style="width: 60px; text-align: center; background: #f9f9f9; border: 1px solid #ccc; border-radius: 4px; color: inherit; font-weight: inherit;"
-                                               onclick="handleInputClick(this)" readonly />
+
+
+                                    {{--                                        <input type="number" name="{{ $idx }}"--}}
+                                    {{--                                               data-index="{{ $idx }}" data-id="{{ $row['id'] }}"--}}
+                                    {{--                                               value="{{ $val ?? '' }}"--}}
+                                    {{--                                               style="width: 60px; text-align: center; background: #f9f9f9; border: 1px solid #ccc; border-radius: 4px; color: inherit; font-weight: inherit;"--}}
+                                    {{--                                               onclick="handleInputClick(this)" readonly/>--}}
+                                    {{--                                    </td>--}}
+
+                                    <td>
+
+                                        <div style="display: flex; justify-content: center;">
+                                            <input type="{{ $row['same_rows'][$idx] == null ? 'hidden' : 'number' }}"
+                                                   readonly
+                                                   data-name="bo"
+                                                   value="{{ $row['same_rows'][$idx] === null ? '' : e($row['same_rows'][$idx]) }}"
+                                                   class="{{ ($idx + 1) === $row['same_cell'] ? 's-highlight' : '' }} {{ ($row['same_rows'][$idx] ?? 0) < 0 ? 'negative' : 'positive' }}"
+                                                   style="{{ ($idx + 1) === $row['same_cell'] ? 'background-color: #e781ff !important;' : '' }} width: 100%; text-align: center; border: 1px solid #ccc; border-radius: 4px;"
+                                                   onclick="handleInputClick(this)"
+                                            />
+                                            <input type="number"
+                                                   readonly
+                                                   value="{{ e($val ?? '') }}"
+                                                   name="{{ e($idx) }}"
+                                                   data-index="{{ e($idx) }}"
+                                                   data-id="{{ e($row['id']) }}"
+                                                   class="{{ ($val ?? 0) < 0 ? 'negative' : 'positive' }}"
+                                                   style="width: 60px; text-align: center; background: #f9f9f9; border: 1px solid #ccc; border-radius: 4px; font-weight: inherit;"
+                                                   onclick="handleInputClick(this)"/>
+                                        </div>
                                     </td>
+
                                 @endforeach
-                                <td class="{{ $total < 0 ? 'negative' : 'positive' }}">{{ $total }}</td>
+                                <td class="{{ $total < 0 ? 'negative' : 'positive' }}">{{ e($total) }}</td>
                             </tr>
                         @endforeach
 
                         <tr class="summary-row">
-                            <td class="summary-cell total">{{ $session['ftd'] }}</td>
+                            <td class="summary-cell total">{{ e($session['ftd']) }}</td>
                             @foreach ($session['td'] as $v)
-                                <td class="summary-cell {{ $v < 0 ? 'negative' : 'positive' }}">{{ $v }}</td>
+                                <td class="summary-cell {{ $v < 0 ? 'negative' : 'positive' }}">{{ e($v) }}</td>
                             @endforeach
-                            <td class="summary-cell {{ $totalTd < 0 ? 'negative' : 'positive' }}">{{ $totalTd }}</td>
+                            <td class="summary-cell {{ $totalTd < 0 ? 'negative' : 'positive' }}">{{ e($totalTd) }}</td>
                         </tr>
 
-                        <tr class="tc-row" data-id="{{ $session['id'] }}" style="font-size: 20px;">
+                        <tr class="tc-row" data-id="{{ e($session['id']) }}" style="font-size: 20px;">
                             <td>TC</td>
                             @foreach ($session['tc'] as $v)
-                                <td class="{{ $v < 0 ? 'negative' : 'positive' }}">{{ $v }}</td>
+                                <td class="{{ $v < 0 ? 'negative' : 'positive' }}">{{ e($v) }}</td>
                             @endforeach
                             <td class="positive">0</td>
                         </tr>
 
-                        <tr class="highlight-row" data-id="{{ $session['id'] }}" style="font-size: 20px;">
-                            <td>{{ $totalCc }}</td>
+                        <tr class="highlight-row" data-id="{{ e($session['id']) }}" style="font-size: 20px;">
+                            <td>{{ e($totalCc) }}</td>
                             @foreach ($session['cc'] as $v)
-                                <td class="{{ $v < 0 ? 'negative' : 'positive' }}">{{ $v }}</td>
+                                <td class="{{ $v < 0 ? 'negative' : 'positive' }}">{{ e($v) }}</td>
                             @endforeach
-                            <td class="positive">{{ $totalTtCc }}</td>
+                            <td class="positive">{{ e($totalTtCc) }}</td>
                         </tr>
 
 
-
-                        <tr class="tt-row" data-id="{{ $session['id'] }}" style="font-size: 20px;">
+                        <tr class="tt-row" data-id="{{ e($session['id']) }}" style="font-size: 20px;">
                             <td>TT</td>
                             @foreach ($session['tt'] as $v)
                                 <td class="{{ $v < 0 ? 'negative' : 'positive' }}">{{ number_format($v) }}</td>
@@ -604,7 +629,7 @@
                                 @if ($isLatest)
 
                                 @else
-                                    {{ $stt }}
+                                    {{ e($stt) }}
                                 @endif
                             </td>
                         </tr>
@@ -615,8 +640,6 @@
 
     </div>
 </div>
-
-
 
 
 </body>

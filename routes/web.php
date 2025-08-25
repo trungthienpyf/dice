@@ -5,15 +5,18 @@ use App\Http\Controllers\DiceController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\RoleController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('dice.index');
 });
+
+
 
 Route::get('/login', function () {
     return view('login');
 })->name('login');
+
+Route::get('/api/dice/detail', [DiceController::class, 'getDetail'])->name('api.dice.viewDetail');
 
 Route::post('/login', [AuthController::class, 'login'])->name('users.login');
 
@@ -27,8 +30,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-    // Route::get('/api/users', [UserController::class, 'index']);       
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');      
+    // Route::get('/api/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
@@ -36,9 +39,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/users/{user}/extend', [UserController::class, 'extend'])->name('users.extend');
     Route::post('/users/{user}/extend', [UserController::class, 'extendSubmit'])->name('users.extend.submit');
     Route::get('/users/{user}/rents/stats', [UserController::class, 'rentStats'])->name('users.rents.stats');
-    
-    
-    
+
+
+
     Route::get('/dice', [DiceController::class, 'index'])->name('dice.index');
     Route::get('/dice/create', [DiceController::class, 'create'])->name('dice.create');
     Route::get('/dice/{id}', [DiceController::class, 'show'])->name('dice.show');

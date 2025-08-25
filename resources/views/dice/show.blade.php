@@ -330,6 +330,75 @@
                 min-width: 30px;
             }
 
+            /* Detail Modal Styles - High Priority */
+            #detailModal .modal-content {
+                border: none !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+                border-radius: 8px !important;
+            }
+
+            #detailModal .modal-header {
+                background-color: #f8f9fa !important;
+                border-bottom: 1px solid #dee2e6 !important;
+                padding: 16px 20px !important;
+            }
+
+            #detailModal .modal-title {
+                font-weight: 500 !important;
+                font-size: 1.1rem !important;
+                color: #495057 !important;
+            }
+
+            #detailModal #detailTable {
+                font-size: 14px !important;
+                margin-bottom: 0 !important;
+            }
+
+            #detailModal #detailTable thead th {
+                background-color: #6c757d !important;
+                color: white !important;
+                font-weight: 500 !important;
+                padding: 12px 8px !important;
+                border: none !important;
+                font-size: 13px !important;
+            }
+
+            #detailModal #detailTable tbody tr:hover {
+                background-color: #f1f3f4 !important;
+            }
+
+            #detailModal #detailTable tbody td {
+                padding: 10px 8px !important;
+                vertical-align: middle !important;
+                border-color: #dee2e6 !important;
+                font-weight: 400 !important;
+            }
+
+            #detailModal #detailTable .positive {
+                color: #198754 !important;
+                font-weight: 500 !important;
+            }
+
+            #detailModal #detailTable .negative {
+                color: #dc3545 !important;
+                font-weight: 500 !important;
+            }
+
+            #detailModal #detailTable .stt-cell {
+                background-color: #f8f9fa !important;
+                font-weight: 600 !important;
+                color: #6c757d !important;
+            }
+
+            /* Override Bootstrap table styles specifically for detail modal */
+            #detailModal .table-striped > tbody > tr:nth-of-type(odd) > td {
+                background-color: rgba(0, 0, 0, 0.05) !important;
+            }
+
+            #detailModal .table-striped > tbody > tr:nth-of-type(even) > td {
+                background-color: transparent !important;
+            }
+
             /* Mobile button improvements */
             .btn {
                 min-height: 40px;
@@ -738,8 +807,81 @@
     </div>
 </div>
 
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 16px 20px;">
+                <h5 class="modal-title" id="detailModalLabel" style="font-weight: 500; font-size: 1.1rem; color: #495057;">
+                    <i class="fas fa-table me-2"></i>Chi tiết bảng
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0" id="detailTable" style="font-size: 14px;">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">STT</th>
+                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">Điểm</th>
+                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">TS</th>
+                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">TT</th>
+                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">Đổ 3</th>
+                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">Thời gian</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailTableBody">
+                            <!-- Data will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Load Bootstrap first -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Force Detail Modal Styles -->
+<style>
+    /* Force override all existing styles for detail modal */
+    #detailModal .modal-content {
+        border: none !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+        border-radius: 8px !important;
+    }
+
+    #detailModal .modal-header {
+        background-color: #f8f9fa !important;
+        border-bottom: 1px solid #dee2e6 !important;
+    }
+
+    #detailModal .modal-title {
+        color: #495057 !important;
+        font-weight: 500 !important;
+    }
+
+    #detailModal table thead th {
+        background-color: #6c757d !important;
+        color: white !important;
+        border: none !important;
+    }
+
+    /* Remove any conflicting table styles */
+    #detailModal .table-striped > tbody > tr:nth-of-type(odd) > td {
+        background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+
+    #detailModal .table-striped > tbody > tr:nth-of-type(even) > td {
+        background-color: transparent !important;
+    }
+</style>
 
 <script>
     // Initialize modal first
@@ -854,8 +996,8 @@
     `;
         });
 
-        
-        if(session.ctd){
+
+        if (session.td != null) {
             table.innerHTML += `
                 <tr class="summary-row">
             <td class="summary-cell total">${session.ftd}</td>
@@ -869,7 +1011,7 @@
             `
         }
 
-        if(session.ctc){
+        if (session.tc != null) {
             table.innerHTML += `
                 <tr class="tc-row" data-id="${session.id}" style="font-size: 20px;">
         <td>TC</td>
@@ -879,7 +1021,7 @@
             `
         }
 
-        if(session.ccc ){
+        if (session.cc != null) {
             table.innerHTML += `
                 <tr class="highlight-row" data-id="${session.id}" style="font-size: 20px;">
         <td>${session.cc.reduce((a, b) => a + b, 0)}</td>
@@ -889,11 +1031,11 @@
             `
         }
 
-        if(session.ctt ){
+        if (session.tt != null) {
             table.innerHTML += `
                 <tr class="tt-row" data-id="${session.id}" style="font-size: 20px;">
         <td>TT</td>
-        ${session.tt.map(v => `<td class="${v < 0 ? 'negative' : 'positive'}">${v.toLocaleString()}</td>`).join('')}
+        ${session.tt.map((v, index) => `<td class="${v < 0 ? 'negative' : 'positive'}" onclick="viewDetail(this, ${index})">${v.toLocaleString()}</td>`).join('')}
         <td class="align-middle">
             ${isLatest ? `
                 <div class="d-flex justify-content-center">
@@ -908,14 +1050,94 @@
         }
 
 
-        
-
         const wrapper = document.createElement('div');
         wrapper.className = 'session-table';
         wrapper.appendChild(sessionTitle);
         wrapper.appendChild(table); // Direct table append for full view priority
 
         return wrapper;
+    }
+
+    function viewDetail(event, index) {
+        console.log('Event:', event);
+        console.log('Column Index:', index); // index sẽ là 0, 1, 2, hoặc 3
+        const tableId = event.closest('table').getAttribute('data-id');
+        console.log('Table ID:', tableId);
+
+        // Show loading state
+        const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+        const modalBody = document.getElementById('detailTableBody');
+        modalBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                    <div class="mt-2">Đang tải dữ liệu...</div>
+                </td>
+            </tr>
+        `;
+        modal.show();
+
+        // Fetch detail data
+        fetch(`{{ route('api.dice.viewDetail') }}?dice_table_id=${tableId}&index=${index}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Detail data:', data);
+                populateDetailModal(data);
+            })
+            .catch(error => {
+                console.error('Error fetching detail data:', error);
+                modalBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Lỗi khi tải dữ liệu: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function populateDetailModal(data) {
+        const modalBody = document.getElementById('detailTableBody');
+
+        if (!data || data.length === 0) {
+            modalBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Không có dữ liệu
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        data.forEach((row, index) => {
+            const ttColor = row.tt >= 0 ? '' : '#dc3545';
+            const tsColor = row.ts >= 0 ? '' : '#dc3545';
+            const pColor = row.p >= 0 ? '' : '#dc3545';
+
+            html += `
+                <tr style="transition: background-color 0.2s ease;" onmouseover="this.style.backgroundColor='#f1f3f4'" onmouseout="this.style.backgroundColor=''">
+                    <td class="text-center" style="background-color: #f8f9fa; font-weight: 600; color: #6c757d; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.stt}</td>
+                    <td class="text-center" style="color: ${pColor}; font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.p !== null ? row.p.toLocaleString() : '-'}</td>
+                    <td class="text-center" style="color: ${tsColor}; font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.ts !== null ? row.ts.toLocaleString() : '-'}</td>
+                    <td class="text-center" style="color: ${ttColor}; font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.tt !== null ? row.tt.toLocaleString() : '-'}</td>
+                    <td class="text-center" style="color:  font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.is_same} </td>
+                    <td class="text-center" style="color: #6c757d; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.created_at || '-'}</td>
+                </tr>
+            `;
+        });
+
+        modalBody.innerHTML = html;
     }
 
     function renderForDate() {

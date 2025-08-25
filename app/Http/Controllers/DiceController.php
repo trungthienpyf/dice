@@ -21,7 +21,7 @@ class DiceController extends Controller
         $user = auth()->user();
 
         $sessions = $user->dices() // truy vấn qua quan hệ belongsToMany
-            ->orderBy('created_at', 'desc')
+        ->orderBy('created_at', 'desc')
             ->paginate(10);
 
         $canViewConfig = $user->can('Xem cấu hình');
@@ -105,8 +105,6 @@ class DiceController extends Controller
         $dice->users()->attach($relatedUserIds);
 
 
-
-
         return redirect()->route('dice.show', $diceParent->id)
             ->with('success', 'Dice session created successfully.');
     }
@@ -115,10 +113,7 @@ class DiceController extends Controller
     {
         $res = [];
 
-        // $sessions = DiceTable::where('parent_id', $id)
-        //     ->orderBy('id')->get();
-
-        $sessions = auth()->user()->diceTables()->where('parent_id', $id)
+        $sessions = DiceTable::where('parent_id', $id)
             ->orderBy('id')->get();
 
         foreach ($sessions as $dice) {
@@ -138,6 +133,7 @@ class DiceController extends Controller
 
             $res = $this->getRes($dice, $rows, $dice, $res);
         }
+
 
         return $res;
     }
@@ -392,10 +388,10 @@ class DiceController extends Controller
 
         if ($sr != null) {
             $same_row_value = $oldDice->diceParent->same_row;
-            $s1 = $sr == 1 ? $same_row_value : - ($same_row_value / 3);
-            $s2 = $sr == 2 ? $same_row_value : - ($same_row_value / 3);
-            $s3 = $sr == 3 ? $same_row_value : - ($same_row_value / 3);
-            $s4 = $sr == 4 ? $same_row_value : - ($same_row_value / 3);
+            $s1 = $sr == 1 ? $same_row_value : -($same_row_value / 3);
+            $s2 = $sr == 2 ? $same_row_value : -($same_row_value / 3);
+            $s3 = $sr == 3 ? $same_row_value : -($same_row_value / 3);
+            $s4 = $sr == 4 ? $same_row_value : -($same_row_value / 3);
         }
 
         $c1 += $s1;
@@ -740,7 +736,7 @@ class DiceController extends Controller
      * @return array
      */
     public
-    function res(mixed $dice, array $rows, $td, $cc, $tc, $tt, $ctd, $ccc, $ctc, $ctt): array
+    function res(mixed $dice, array $rows, $td, $cc, $tc, $tt): array
     {
         return [
             'id' => $dice->id,
@@ -756,11 +752,6 @@ class DiceController extends Controller
             'cc' => $cc,
             'tc' => $tc,
             'tt' => $tt,
-            'ctd' => $ctd,
-            'ccc' => $ccc,
-            'ctc' => $ctc,
-            'ctt' => $ctt,
-
         ];
     }
 
@@ -774,40 +765,35 @@ class DiceController extends Controller
     public
     function getRes($dice, array $rows, $oldDice, array $res): array
     {
-        $user = auth()->user();
 
-        $td =  [
+        $td = [
             $dice->td1 ?? 0,
             $dice->td2 ?? 0,
             $dice->td3 ?? 0,
             $dice->td4 ?? 0,
-        ] ;
-        $ctd = $user->can('Xem tổng chi của bảng hiện tại');
-        
+        ];
+
         $cc = [
             $oldDice->cc1 ?? 0,
             $oldDice->cc2 ?? 0,
             $oldDice->cc3 ?? 0,
             $oldDice->cc4 ?? 0,
-        ] ;
+        ];
 
-        $ccc = $user->can('Xem tiền xâu');
 
-        $tc =  [
+        $tc = [
             $oldDice->tc1 ?? 0,
             $oldDice->tc2 ?? 0,
             $oldDice->tc3 ?? 0,
             $oldDice->tc4 ?? 0,
-        ] ;
-        $ctc = $user->can('Tổng chi của nhiều bảng') ;
+        ];
 
         $tt = [
             $oldDice->tt1 ?? 0,
             $oldDice->tt2 ?? 0,
             $oldDice->tt3 ?? 0,
             $oldDice->tt4 ?? 0,
-        ] ;
-        $ctt = $user->can('Xem tổng tiền');
+        ];
 
         $res[] = $this->res(
             $dice,
@@ -815,11 +801,7 @@ class DiceController extends Controller
             $td,
             $cc,
             $tc,
-            $tt,
-            $ctd,
-            $ccc,
-            $ctc,
-            $ctt,
+            $tt
         );
         Log::info($res);
         return $res;
@@ -830,9 +812,7 @@ class DiceController extends Controller
     function getResEvent($dice, array $rows, $oldDice): array
     {
 
-        return $this->res(
-            $dice,
-            $rows,
+        return $this->res($dice, $rows,
             [
                 $dice->td1 ?? 0,
                 $dice->td2 ?? 0,
@@ -856,9 +836,9 @@ class DiceController extends Controller
                 $oldDice->tt2 ?? 0,
                 $oldDice->tt3 ?? 0,
                 $oldDice->tt4 ?? 0,
-            ]
-        );
+            ]);
     }
+
 
     public
     function verifyPassword(Request $request)
@@ -927,4 +907,44 @@ class DiceController extends Controller
         if ($this->s4 != null) return 4;
         return null;
     }
+
+
+    public function getDetail(Request $request)
+    {
+
+        $diceTable = DiceTable::findOrFail($request->dice_table_id);
+
+        $diceRows = $diceTable->diceRows()->orderBy('id')->get();
+        $result = [];
+        $conditionCc = $diceTable->diceParent->cc;
+        $conditionTienSau = $diceTable->diceParent->ts;
+        $conditionTd = $diceTable->diceParent->td;
+        $i = 1;
+
+
+        foreach ($diceRows as $diceRow) {
+            $index = $request->index + 1 ?? 0;
+            $columnName = 'c' . $index;
+            $columnNameS = 's' . $index;
+            $columnNameSv = 'sv' . $index;
+
+            $c = $diceRow->{$columnName} ?? 0;
+            $c += $diceRow->{$columnNameS};
+            $cc = ((intval($c) >= $conditionCc ? $conditionTienSau : 0)) + $diceRow->{$columnNameSv};
+
+            $tt = ($c * $conditionTd) - $cc;
+
+            $result[] = [
+                'stt' => $i,
+                'p' => $c,
+                'ts' => $cc,
+                'tt' => $tt,
+                'is_same' => $diceRow->same_cell == $index ? 'Có' : 'Không',
+                'created_at' => $diceRow->updated_at ? $diceRow->updated_at->format('H:i:s') : '',
+            ];
+            $i++;
+        }
+        return $result;
+    }
+
 }
