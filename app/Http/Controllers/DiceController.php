@@ -911,39 +911,49 @@ class DiceController extends Controller
 
     public function getDetail(Request $request)
     {
-
         $diceTable = DiceTable::findOrFail($request->dice_table_id);
+        $diceParent = Dice::with(['diceTables', 'diceTables.diceRows'])
+            ->findOrFail($diceTable->parent_id);
 
-        $diceRows = $diceTable->diceRows()->orderBy('id')->get();
+        $conditionCc = $diceParent->cc;
+        $conditionTienSau = $diceParent->ts;
+        $conditionTd = $diceParent->td;
+
         $result = [];
-        $conditionCc = $diceTable->diceParent->cc;
-        $conditionTienSau = $diceTable->diceParent->ts;
-        $conditionTd = $diceTable->diceParent->td;
-        $i = 1;
+        $diceTables = $diceParent->diceTables()->orderBy('id')->get();
+        foreach ($diceTables as $diceTable) {
+            $i = 1;
+            $item = [];
+            $diceRows = $diceTable->diceRows()->orderBy('id')->get();
 
+            foreach ($diceRows as $diceRow) {
+                $index = $request->index ?? 0;
+                $columnIndex = $index + 1;
+                $columnName = 'c' . $columnIndex;
+                $columnNameS = 's' . $columnIndex;
+                $columnNameSv = 'sv' . $columnIndex;
 
-        foreach ($diceRows as $diceRow) {
-            $index = $request->index + 1 ?? 0;
-            $columnName = 'c' . $index;
-            $columnNameS = 's' . $index;
-            $columnNameSv = 'sv' . $index;
+                $c = $diceRow->{$columnName} ?? 0;
+                $s = $diceRow->{$columnNameS} ?? 0;
+                $sv = $diceRow->{$columnNameSv} ?? 0;
 
-            $c = $diceRow->{$columnName} ?? 0;
-            $c += $diceRow->{$columnNameS};
-            $cc = ((intval($c) >= $conditionCc ? $conditionTienSau : 0)) + $diceRow->{$columnNameSv};
+                $totalC = $c + $s;
+                $cc = ((intval($totalC) >= $conditionCc ? $conditionTienSau : 0)) + $sv;
+                $tt = ($totalC * $conditionTd) - $cc;
 
-            $tt = ($c * $conditionTd) - $cc;
-
-            $result[] = [
-                'stt' => $i,
-                'p' => $c,
-                'ts' => $cc,
-                'tt' => $tt,
-                'is_same' => $diceRow->same_cell == $index ? 'Có' : 'Không',
-                'created_at' => $diceRow->updated_at ? $diceRow->updated_at->format('H:i:s') : '',
-            ];
-            $i++;
+                $item[] = [
+                    'stt' => $i,
+                    'p' => $totalC,
+                    'ts' => $cc,
+                    'tt' => $tt,
+                    'is_same' => $diceRow->same_cell == $columnIndex ? 'Có' : 'Không',
+                    'created_at' => $diceRow->updated_at ? $diceRow->updated_at->format('H:i:s') : '',
+                ];
+                $i++;
+            }
+            $result[] = $item;
         }
+
         return $result;
     }
 

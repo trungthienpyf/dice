@@ -817,23 +817,9 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped mb-0" id="detailTable" style="font-size: 14px;">
-                        <thead>
-                            <tr>
-                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">STT</th>
-                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">Điểm</th>
-                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">TS</th>
-                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">TT</th>
-                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">Đổ 3</th>
-                                <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">Thời gian</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detailTableBody">
-                            <!-- Data will be injected here -->
-                        </tbody>
-                    </table>
+            <div class="modal-body p-3">
+                <div id="detailTablesContainer">
+                    <!-- Tables will be injected here -->
                 </div>
             </div>
             <div class="modal-footer">
@@ -1066,16 +1052,14 @@
 
         // Show loading state
         const modal = new bootstrap.Modal(document.getElementById('detailModal'));
-        const modalBody = document.getElementById('detailTableBody');
-        modalBody.innerHTML = `
-            <tr>
-                <td colspan="5" class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Đang tải...</span>
-                    </div>
-                    <div class="mt-2">Đang tải dữ liệu...</div>
-                </td>
-            </tr>
+        const container = document.getElementById('detailTablesContainer');
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Đang tải...</span>
+                </div>
+                <div class="mt-2">Đang tải dữ liệu...</div>
+            </div>
         `;
         modal.show();
 
@@ -1093,51 +1077,112 @@
             })
             .catch(error => {
                 console.error('Error fetching detail data:', error);
-                modalBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="text-center py-4 text-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Lỗi khi tải dữ liệu: ${error.message}
-                        </td>
-                    </tr>
+                container.innerHTML = `
+                    <div class="text-center py-4 text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Lỗi khi tải dữ liệu: ${error.message}
+                    </div>
                 `;
             });
     }
 
     function populateDetailModal(data) {
-        const modalBody = document.getElementById('detailTableBody');
+        const container = document.getElementById('detailTablesContainer');
 
         if (!data || data.length === 0) {
-            modalBody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="text-center py-4 text-muted">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Không có dữ liệu
-                    </td>
-                </tr>
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Không có dữ liệu
+                </div>
             `;
             return;
         }
 
         let html = '';
-        data.forEach((row, index) => {
-            const ttColor = row.tt >= 0 ? '' : '#dc3545';
-            const tsColor = row.ts >= 0 ? '' : '#dc3545';
-            const pColor = row.p >= 0 ? '' : '#dc3545';
+        data.forEach((tableData, tableIndex) => {
+            const tableId = `table-${tableIndex}`;
+            const collapseId = `collapse-${tableIndex}`;
 
             html += `
-                <tr style="transition: background-color 0.2s ease;" onmouseover="this.style.backgroundColor='#f1f3f4'" onmouseout="this.style.backgroundColor=''">
-                    <td class="text-center" style="background-color: #f8f9fa; font-weight: 600; color: #6c757d; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.stt}</td>
-                    <td class="text-center" style="color: ${pColor}; font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.p !== null ? row.p.toLocaleString() : '-'}</td>
-                    <td class="text-center" style="color: ${tsColor}; font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.ts !== null ? row.ts.toLocaleString() : '-'}</td>
-                    <td class="text-center" style="color: ${ttColor}; font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.tt !== null ? row.tt.toLocaleString() : '-'}</td>
-                    <td class="text-center" style="color:  font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.is_same} </td>
-                    <td class="text-center" style="color: #6c757d; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.created_at || '-'}</td>
-                </tr>
+                <div class="card mb-3" style="border: 1px solid #dee2e6; border-radius: 8px;">
+                    <div class="card-header" style="background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 12px 16px;">
+                        <h6 class="mb-0">
+                            <button class="btn btn-link text-decoration-none p-0 w-100 text-start"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#${collapseId}"
+                                    aria-expanded="false"
+                                    aria-controls="${collapseId}"
+                                    style="color: #495057; font-weight: 500;">
+                                <i class="fas fa-chevron-right me-2 collapse-icon"></i>
+                                Bảng ${tableIndex + 1}
+                            </button>
+                        </h6>
+                    </div>
+                    <div class="collapse" id="${collapseId}">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped mb-0" style="font-size: 14px;">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">STT</th>
+                                            <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">Điểm</th>
+                                            <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">TS</th>
+                                            <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">TT</th>
+                                            <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">Đổ 3</th>
+                                            <th class="text-center" style="background-color: #6c757d; color: white; font-weight: 500; padding: 12px 8px; border: none; font-size: 13px;">Thời gian</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+            `;
+
+            tableData.forEach((row, rowIndex) => {
+                const ttColor = row.tt >= 0 ? '' : '#dc3545';
+                const tsColor = row.ts >= 0 ? '' : '#dc3545';
+                const pColor = row.p >= 0 ? '' : '#dc3545';
+
+                html += `
+                    <tr style="transition: background-color 0.2s ease;" onmouseover="this.style.backgroundColor='#f1f3f4'" onmouseout="this.style.backgroundColor=''">
+                        <td class="text-center" style="background-color: #f8f9fa; font-weight: 600; color: #6c757d; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.stt}</td>
+                        <td class="text-center" style="color: ${pColor}; font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.p !== null ? row.p.toLocaleString() : '-'}</td>
+                        <td class="text-center" style="color: ${tsColor}; font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.ts !== null ? row.ts.toLocaleString() : '-'}</td>
+                        <td class="text-center" style="color: ${ttColor}; font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.tt !== null ? row.tt.toLocaleString() : '-'}</td>
+                        <td class="text-center" style="color: #6c757d; font-weight: 500; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.is_same}</td>
+                        <td class="text-center" style="color: #6c757d; padding: 10px 8px; vertical-align: middle; border-color: #dee2e6;">${row.created_at || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             `;
         });
 
-        modalBody.innerHTML = html;
+        container.innerHTML = html;
+
+        // Add event listeners for collapse icons
+        document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => {
+            button.addEventListener('click', function() {
+                const icon = this.querySelector('.collapse-icon');
+                const target = document.querySelector(this.getAttribute('data-bs-target'));
+
+                target.addEventListener('shown.bs.collapse', function() {
+                    icon.classList.remove('fa-chevron-right');
+                    icon.classList.add('fa-chevron-down');
+                });
+
+                target.addEventListener('hidden.bs.collapse', function() {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-right');
+                });
+            });
+        });
     }
 
     function renderForDate() {
@@ -1432,7 +1477,7 @@
     const echo = new Echo({
         broadcaster: 'socket.io',
         host: 'https://echo-server.treemind3.com/'
-        // host: 'lottery.test:6001'
+        // host: 'dice.test:6001'
     });
 
 

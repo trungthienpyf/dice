@@ -16,6 +16,6 @@ class Dice extends Model
 
     public function diceTables()
     {
-        return $this->hasMany(DiceTable::class, 'dice_id');
+        return $this->hasMany(DiceTable::class, 'parent_id');
     }
 }
